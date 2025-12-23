@@ -73,7 +73,7 @@ export default function Map({ events, webcams, selectedEvent, onEventSelect }: M
         id: 'national-roads-highlight',
         type: 'line',
         source: 'protomaps',
-        'source-layer': 'transportation',
+        'source-layer': 'roads',
         filter: [
           'all',
           ['has', 'ref'],
