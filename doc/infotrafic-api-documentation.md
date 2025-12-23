@@ -6,6 +6,69 @@ This document provides an overview of the Infotrafic.re API endpoints and their 
 
 ---
 
+## API Overview
+
+The Infotrafic.re API is built on a RESTful architecture and is accessed through the base URL pattern:
+
+**Base URL:** `https://www.infotrafic.re/api/`
+
+### How the Frontend Works
+
+The Infotrafic.re frontend is a Vue.js application that uses Vuex for state management. The application loads data through a modular store architecture:
+
+1. **API Request Layer** (`vfs.min.js`): All API requests are routed through a centralized `api.get()` and `api.post()` function that prefixes URLs with `/api/`
+
+2. **Store Modules**: The application uses separate Vuex modules for different data domains:
+   - `roadModule` - Road disruptions, works, and traffic data
+   - `transitModule` - Public transit lines, stops, and disruptions
+   - `weatherModule` - Weather conditions, forecasts, alerts, and air quality
+   - `journeyModule` - Route planning and navigation
+
+3. **Disruption Categories**: The road module groups multiple disruption types into categories:
+   - `roadworks` category includes: `roadworks`, `roadworks_urgent`, `traficLaneRemoved`, `narrowPassage`, `flowDirectionClosed`
+   - `event` category includes: `event`, `flood`, `roadClosure`, `hazard`, `winter`, `trafficolor`, `traffic`, `accident`
+   - Each category can contain multiple disruption types that are fetched in parallel
+
+4. **Caching Strategy**: The API uses HTTP 304 (Not Modified) responses with Last-Modified headers to efficiently cache data and reduce bandwidth
+
+### Discovered API Endpoints
+
+Through code analysis of `vfs.min.js`, the following API endpoints have been identified:
+
+**Road & Traffic:**
+- `/api/road/works` - Road works and construction
+- `/api/road/disruptions/{type}` - Road disruptions by type (accident, traffic_jam, flood, roadClosure, hazard, trafficolor, etc.)
+
+**Transit:**
+- `/api/transit/disruptions` - Transit service disruptions
+- `/api/transit/info/lines` - Transit line information
+- `/api/transit/info/stops` - Transit stop information
+- `/api/transit/info/stop-points` - Transit stop point details
+
+**Weather:**
+- `/api/weather/current` - Current weather conditions (requires lat/lng params)
+- `/api/weather/forecast` - Weather forecast (requires lat/lng params)
+- `/api/weather/alert` - Weather alerts and warnings
+- `/api/weather/aqi` - Air quality index (requires lat/lng params)
+
+**Places & Search:**
+- `/api/places/search` - Location search with autocomplete (requires q, lat, lng params)
+
+**Other:**
+- `/api/journeys` - Journey planning/routing
+- `/api/device/lastModified` - Client cache management
+- `/api/floods` - Flood data
+- `/api/agence` - Agency information
+- `/api/bus_lines` - Bus line data
+- `/api/cycle_path` - Cycling path data
+- `/api/fire_grid` - Fire grid data
+- `/api/fire_risk_areas` - Fire risk areas
+- `/api/flood_risk_areas` - Flood risk areas
+- `/api/tech_risk_areas` - Technological risk areas
+- `/api/dashboard` - Dashboard data
+
+---
+
 ## Road Disruptions Endpoints
 
 ### 1. Accidents
@@ -207,9 +270,43 @@ Routes tracked include RN1, RN2, RN3, RN6 with named checkpoints (PMV locations 
 
 ---
 
+## Road Information Endpoints
+
+### 13. Webcams
+**Endpoint:** `https://www.infotrafic.re/api/road/info/webcam`
+
+**Status:** ✓ Success
+
+**Response Structure:**
+The API returns a JSON object with 18 traffic webcams, each containing:
+
+- **webcam_id** (string): Unique identifier (dec_02 through dec_18)
+- **url** (string): Image URL (format: `https://www.infotrafic.re/CAM/[id].jpeg`)
+- **geolocation** (array): Coordinates as [longitude, latitude]
+- **public_description** (string): Location name and road designation
+
+**Geographic Coverage:**
+Cameras monitor major routes (RN1, RN2, RN3) across municipalities including St Paul, St Pierre, St Denis, Le Port, and Ste Marie.
+
+**Example Entry:**
+```json
+{
+  "dec_09": {
+    "webcam_id": "dec_09",
+    "url": "https://www.infotrafic.re/CAM/dec_09.jpeg",
+    "geolocation": [55.27, -21.02],
+    "public_description": "RN1 St Paul, Tranchée St Paul"
+  }
+}
+```
+
+**Description:** Returns information about all available traffic webcams across Réunion Island's road network.
+
+---
+
 ## Weather Endpoints
 
-### 13. Current Weather
+### 14. Current Weather
 **Endpoint:** `https://www.infotrafic.re/api/weather/current?lat=-21.1150051&lng=55.508862`
 
 **Status:** ✗ Error (404 Not Found)
@@ -220,7 +317,7 @@ Routes tracked include RN1, RN2, RN3, RN6 with named checkpoints (PMV locations 
 
 ---
 
-### 14. Weather Alerts
+### 15. Weather Alerts
 **Endpoint:** `https://www.infotrafic.re/api/weather/alert`
 
 **Status:** ✓ Success
@@ -248,7 +345,7 @@ Routes tracked include RN1, RN2, RN3, RN6 with named checkpoints (PMV locations 
 
 ---
 
-### 15. Air Quality Index (AQI)
+### 16. Air Quality Index (AQI)
 **Endpoint:** `https://www.infotrafic.re/api/weather/aqi?lat=-21.1150051&lng=55.508862`
 
 **Status:** ✓ Success (Empty Response)
@@ -264,25 +361,68 @@ Routes tracked include RN1, RN2, RN3, RN6 with named checkpoints (PMV locations 
 
 ## Summary
 
-### Working Endpoints (10 total)
-- `/api/road/disruptions/accident` - Empty (no accidents)
-- `/api/road/disruptions/live_jam` - Empty (no live jams)
-- `/api/road/disruptions/traffic_jam` - Empty (no traffic jams)
-- `/api/road/disruptions/trafficolor` - Returns real-time traffic color status (54+ entries)
-- `/api/road/disruptions/roadclosure` - Empty (no closures)
-- `/api/road/disruptions/flood` - Empty (no floods)
-- `/api/road/disruptions/market` - Empty (no market disruptions)
-- `/api/road/disruptions/local_event` - Empty (no events)
-- `/api/road/disruptions/roadworks` - Empty (no roadworks)
-- `/api/weather/alert` - Returns weather alert data
+### Tested Endpoints (16 total)
 
-### Failed Endpoints (4 total)
+**Working with Data (11 total):**
+- `/api/road/disruptions/trafficolor` - Real-time traffic color status (54+ entries)
+- `/api/road/info/webcam` - Traffic webcam locations and URLs (18 cameras)
+- `/api/weather/alert` - Weather alert data
+
+**Working but Empty (8 total):**
+- `/api/road/disruptions/accident` - No accidents
+- `/api/road/disruptions/live_jam` - No live jams
+- `/api/road/disruptions/traffic_jam` - No traffic jams
+- `/api/road/disruptions/roadclosure` - No closures
+- `/api/road/disruptions/flood` - No floods
+- `/api/road/disruptions/market` - No market disruptions
+- `/api/road/disruptions/local_event` - No events
+- `/api/road/disruptions/roadworks` - No roadworks
+- `/api/weather/aqi` - No AQI data
+
+**Failed Endpoints (4 total):**
 - `/api/road/disruptions/animal` - 500 Internal Server Error
 - `/api/road/disruptions/serious_hazard` - 500 Internal Server Error
 - `/api/road/disruptions/hazard` - 500 Internal Server Error
 - `/api/weather/current` - 404 Not Found
 
-### Empty Response Endpoints (1 total)
-- `/api/weather/aqi` - Empty (no AQI data)
+### Additional Endpoints Discovered via Code Analysis
+
+Through analysis of the frontend JavaScript (`vfs.min.js`), the following additional endpoints were discovered but not yet tested:
+
+**Transit Endpoints:**
+- `/api/transit/disruptions` - Transit service disruptions
+- `/api/transit/info/lines` - Transit line information
+- `/api/transit/info/stops` - Transit stop information
+- `/api/transit/info/stop-points` - Transit stop point details
+
+**Road & Infrastructure:**
+- `/api/road/works` - Road works and construction projects
+- `/api/bus_lines` - Bus line geographic data
+- `/api/cycle_path` - Cycling path data
+
+**Weather (Additional):**
+- `/api/weather/forecast` - Weather forecast (requires lat/lng params)
+
+**Risk Areas:**
+- `/api/floods` - Flood data
+- `/api/flood_risk_areas` - Flood risk zones
+- `/api/fire_risk_areas` - Fire risk zones
+- `/api/fire_grid` - Fire grid data
+- `/api/tech_risk_areas` - Technological risk zones
+
+**Other Services:**
+- `/api/places/search` - Location search with autocomplete (requires q, lat, lng params)
+- `/api/journeys` - Journey planning/routing
+- `/api/agence` - Agency information
+- `/api/dashboard` - Dashboard data
+- `/api/device/lastModified` - Client-side cache management
+
+### Technical Notes
+
+1. **Authentication:** Most endpoints require authentication (`authRequired: true` in code), though public endpoints work without credentials
+2. **Caching:** The API implements HTTP 304 (Not Modified) responses with Last-Modified headers for efficient caching
+3. **Category Grouping:** Road disruptions are fetched in parallel by category, where each category can include multiple disruption types
+4. **Empty Responses:** Empty `{}` responses indicate no current data for that disruption type, not an error condition
+5. **Base URL:** All API requests use the base URL `https://www.infotrafic.re/api/`
 
 **Note:** The empty responses for road disruption endpoints suggest that at the time of this query (2025-12-23), there were no active incidents of those types on Réunion Island roads. The 500 errors indicate server-side issues that prevent exploration of those endpoints at this time.
