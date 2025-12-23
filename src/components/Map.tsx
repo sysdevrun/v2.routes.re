@@ -49,6 +49,7 @@ export default function Map({ events, webcams, selectedEvent, onEventSelect }: M
             type: 'raster-dem',
             url: PMTILES_TERRAIN,
             tileSize: 256,
+            encoding: 'terrarium',
           },
         },
         layers: layers('protomaps', namedFlavor('light'), { lang: 'fr' }),
