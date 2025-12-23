@@ -53,11 +53,54 @@ This document provides an overview of the Infotrafic.re API endpoints and their 
 ### 4. Traffic Color Status
 **Endpoint:** `https://www.infotrafic.re/api/road/disruptions/trafficolor`
 
-**Status:** ✗ Error (500 Internal Server Error)
+**Status:** ✓ Success
 
-**Error Message:** Request failed with status code 500
+**Response Structure:**
+The API returns a JSON object with 54+ traffic entries (IDs: 62321-62960+), each containing:
 
-**Description:** API cannot be explored for now because of a server error. This endpoint likely provides color-coded traffic status information but is currently unavailable.
+- **actual_end_date** (string): End timestamp in UTC (e.g., "2025-12-23 11:41:53 UTC")
+- **actual_start_date** (string): Start timestamp in UTC (e.g., "2025-12-23 11:11:53 UTC")
+- **planned_end_date** (string): Planned end timestamp in UTC
+- **planned_start_date** (string): Planned start timestamp in UTC
+- **disruption_type** (string): Always "trafficolor" for this endpoint
+- **geolocation** (array): Array of [longitude, latitude] coordinates
+- **public_description** (object): Bilingual traffic status messages (English/French)
+- **severity_level** (integer): Traffic severity (e.g., 2)
+- **source** (string): Data source (e.g., "Labocom")
+- **trafficolor** (string): Hex color code indicating traffic status
+- **unique_disruption_number** (string): Route identifier
+- **visibility** (string): "yes" or "no"
+
+**Traffic Color Codes:**
+- **#77F362** (Green): "Smooth traffic" / "Trafic fluide"
+- **#EA412C** (Red): Congested - "Average speed: 40 km/h"
+- **#EE7E33** (Orange): Moderate - "Average speed: 34-55 km/h"
+
+**Geographic Coverage:**
+Routes tracked include RN1, RN2, RN3, RN6 with named checkpoints (PMV locations like Stella, Portail, Étang Salé, etc.).
+
+**Example Entry:**
+```json
+{
+  "62321": {
+    "actual_end_date": "2025-12-23 11:41:53 UTC",
+    "actual_start_date": "2025-12-23 11:11:53 UTC",
+    "disruption_type": "trafficolor",
+    "geolocation": [[55.123, -21.456]],
+    "public_description": {
+      "en": "Smooth traffic",
+      "fr": "Trafic fluide"
+    },
+    "severity_level": 2,
+    "source": "Labocom",
+    "trafficolor": "#77F362",
+    "unique_disruption_number": "RN1_PMV_Stella",
+    "visibility": "yes"
+  }
+}
+```
+
+**Description:** Returns comprehensive real-time traffic status data for major roads across Réunion Island, using color-coded indicators to show traffic flow conditions.
 
 ---
 
@@ -221,10 +264,11 @@ This document provides an overview of the Infotrafic.re API endpoints and their 
 
 ## Summary
 
-### Working Endpoints (9 total)
+### Working Endpoints (10 total)
 - `/api/road/disruptions/accident` - Empty (no accidents)
 - `/api/road/disruptions/live_jam` - Empty (no live jams)
 - `/api/road/disruptions/traffic_jam` - Empty (no traffic jams)
+- `/api/road/disruptions/trafficolor` - Returns real-time traffic color status (54+ entries)
 - `/api/road/disruptions/roadclosure` - Empty (no closures)
 - `/api/road/disruptions/flood` - Empty (no floods)
 - `/api/road/disruptions/market` - Empty (no market disruptions)
@@ -232,8 +276,7 @@ This document provides an overview of the Infotrafic.re API endpoints and their 
 - `/api/road/disruptions/roadworks` - Empty (no roadworks)
 - `/api/weather/alert` - Returns weather alert data
 
-### Failed Endpoints (5 total)
-- `/api/road/disruptions/trafficolor` - 500 Internal Server Error
+### Failed Endpoints (4 total)
 - `/api/road/disruptions/animal` - 500 Internal Server Error
 - `/api/road/disruptions/serious_hazard` - 500 Internal Server Error
 - `/api/road/disruptions/hazard` - 500 Internal Server Error
