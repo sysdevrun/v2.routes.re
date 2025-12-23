@@ -68,6 +68,28 @@ export default function Map({ events, webcams, selectedEvent, onEventSelect }: M
     map.current.addControl(new maplibregl.ScaleControl(), 'bottom-left');
 
     map.current.on('load', () => {
+      // Add highlight layer for national roads (ref starting with N)
+      map.current!.addLayer({
+        id: 'national-roads-highlight',
+        type: 'line',
+        source: 'protomaps',
+        'source-layer': 'transportation',
+        filter: [
+          'all',
+          ['has', 'ref'],
+          ['==', ['slice', ['get', 'ref'], 0, 1], 'N'],
+        ],
+        paint: {
+          'line-color': '#dc2626',
+          'line-width': 6,
+          'line-opacity': 0.8,
+        },
+        layout: {
+          'line-cap': 'round',
+          'line-join': 'round',
+        },
+      });
+
       setMapLoaded(true);
     });
 
