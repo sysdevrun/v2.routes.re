@@ -53,7 +53,7 @@ export default function Map({ events, webcams, selectedEvent, onEventSelect }: M
         },
         terrain: {
           source: 'reunion-terrain',
-          exaggeration: 1.2,
+          exaggeration: 0,
         },
         layers: layers('protomaps', namedFlavor('light'), { lang: 'fr' }),
       },
