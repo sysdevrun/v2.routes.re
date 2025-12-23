@@ -2,32 +2,37 @@ import { useEffect, useState, useCallback } from 'react';
 import Map from './components/Map';
 import EventsList from './components/EventsList';
 import EventDetails from './components/EventDetails';
-import { fetchAllEvents } from './services/api';
-import type { MapEvent } from './types/events';
+import { fetchAllEvents, fetchWebcams } from './services/api';
+import type { MapEvent, Webcam } from './types/events';
 
 function App() {
   const [events, setEvents] = useState<MapEvent[]>([]);
+  const [webcams, setWebcams] = useState<Webcam[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<MapEvent | null>(null);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
-    async function loadEvents() {
+    async function loadData() {
       setLoading(true);
       try {
-        const data = await fetchAllEvents();
-        setEvents(data);
+        const [eventsData, webcamsData] = await Promise.all([
+          fetchAllEvents(),
+          fetchWebcams(),
+        ]);
+        setEvents(eventsData);
+        setWebcams(webcamsData);
       } catch (error) {
-        console.error('Failed to load events:', error);
+        console.error('Failed to load data:', error);
       } finally {
         setLoading(false);
       }
     }
 
-    loadEvents();
+    loadData();
 
     // Refresh every 5 minutes
-    const interval = setInterval(loadEvents, 5 * 60 * 1000);
+    const interval = setInterval(loadData, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -110,6 +115,7 @@ function App() {
         <main className="flex-1 relative">
           <Map
             events={events}
+            webcams={webcams}
             selectedEvent={selectedEvent}
             onEventSelect={handleEventSelect}
           />

@@ -71,3 +71,10 @@ export interface MapEvent {
   startDate?: Date;
   endDate?: Date;
 }
+
+export interface Webcam {
+  id: string;
+  url: string;
+  coordinates: [number, number];
+  description: string;
+}

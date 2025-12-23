@@ -1,4 +1,4 @@
-import type { RoadDisruptionsResponse, RoadWork, DisruptionType, MapEvent, LocalizedText } from '../types/events';
+import type { RoadDisruptionsResponse, RoadWork, DisruptionType, MapEvent, LocalizedText, Webcam } from '../types/events';
 
 const PROXY_BASE = 'https://gtfs-proxy.sys-dev-run.re/proxy/';
 const API_HOST = 'www.infotrafic.re';
@@ -171,4 +171,43 @@ export async function fetchAllEvents(): Promise<MapEvent[]> {
   ]);
 
   return results.flat();
+}
+
+interface WebcamResponse {
+  [id: string]: {
+    webcam_id: string;
+    url: string;
+    geolocation: [number, number];
+    public_description?: string;
+  };
+}
+
+export async function fetchWebcams(): Promise<Webcam[]> {
+  try {
+    const response = await fetch(proxyUrl('/api/road/info/webcam'));
+    if (!response.ok) {
+      console.warn('Failed to fetch webcams:', response.status);
+      return [];
+    }
+
+    const data: WebcamResponse = await response.json();
+    const webcams: Webcam[] = [];
+
+    for (const [id, webcam] of Object.entries(data)) {
+      const [lng, lat] = webcam.geolocation;
+      if (!isFinite(lng) || !isFinite(lat)) continue;
+
+      webcams.push({
+        id: webcam.webcam_id || id,
+        url: webcam.url,
+        coordinates: [lng, lat],
+        description: webcam.public_description || '',
+      });
+    }
+
+    return webcams;
+  } catch (error) {
+    console.warn('Error fetching webcams:', error);
+    return [];
+  }
 }
