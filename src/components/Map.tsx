@@ -171,7 +171,7 @@ export default function Map({ events, webcams, selectedEvent, onEventSelect }: M
       el.style.border = '3px solid white';
       el.style.boxShadow = '0 4px 12px rgba(0,0,0,0.4)';
       el.style.cursor = 'pointer';
-      el.style.transition = 'transform 0.2s, box-shadow 0.2s';
+      el.style.transition = 'box-shadow 0.2s';
       el.style.backgroundColor = '#1f2937';
 
       const img = document.createElement('img');
@@ -208,13 +208,11 @@ export default function Map({ events, webcams, selectedEvent, onEventSelect }: M
       el.appendChild(label);
 
       el.addEventListener('mouseenter', () => {
-        el.style.transform = 'scale(1.1)';
         el.style.boxShadow = '0 6px 20px rgba(0,0,0,0.5)';
         el.style.zIndex = '10';
       });
 
       el.addEventListener('mouseleave', () => {
-        el.style.transform = 'scale(1)';
         el.style.boxShadow = '0 4px 12px rgba(0,0,0,0.4)';
         el.style.zIndex = '1';
       });
@@ -223,7 +221,7 @@ export default function Map({ events, webcams, selectedEvent, onEventSelect }: M
         window.open(webcam.url, '_blank');
       });
 
-      const marker = new maplibregl.Marker({ element: el, anchor: 'bottom' })
+      const marker = new maplibregl.Marker({ element: el, anchor: 'center' })
         .setLngLat(webcam.coordinates)
         .addTo(map.current!);
 
