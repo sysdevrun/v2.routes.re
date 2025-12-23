@@ -4,9 +4,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { Protocol } from 'pmtiles';
 import type { MapEvent } from '../types/events';
 
-const PROXY_BASE = 'https://gtfs-proxy.sys-dev-run.re/proxy/';
-const PMTILES_VECTOR = `pmtiles://${PROXY_BASE}www.bus.re/assets/reunion-DskqYIt0.pmtiles`;
-const PMTILES_TERRAIN = `pmtiles://${PROXY_BASE}www.bus.re/assets/reunion-terrain-DpHRzEjp.pmtiles`;
+const PMTILES_VECTOR = 'pmtiles://https://www.bus.re/assets/reunion-DskqYIt0.pmtiles';
 
 // Réunion Island center coordinates
 const REUNION_CENTER: [number, number] = [55.536, -21.115];
@@ -42,15 +40,6 @@ export default function Map({ events, selectedEvent, onEventSelect }: MapProps) 
             type: 'vector',
             url: PMTILES_VECTOR,
           },
-          'reunion-terrain': {
-            type: 'raster-dem',
-            url: PMTILES_TERRAIN,
-            tileSize: 256,
-          },
-        },
-        terrain: {
-          source: 'reunion-terrain',
-          exaggeration: 1.2,
         },
         layers: [
           {
@@ -223,9 +212,8 @@ export default function Map({ events, selectedEvent, onEventSelect }: MapProps) 
       },
       center: REUNION_CENTER,
       zoom: INITIAL_ZOOM,
-      pitch: 45,
+      pitch: 0,
       bearing: 0,
-      maxPitch: 85,
     });
 
     map.current.addControl(new maplibregl.NavigationControl(), 'top-right');
@@ -291,7 +279,6 @@ export default function Map({ events, selectedEvent, onEventSelect }: MapProps) 
     map.current.flyTo({
       center: selectedEvent.coordinates,
       zoom: 14,
-      pitch: 60,
     });
   }, [selectedEvent]);
 
