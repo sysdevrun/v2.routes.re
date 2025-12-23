@@ -6,6 +6,7 @@ import { layers, namedFlavor } from '@protomaps/basemaps';
 import type { MapEvent, Webcam } from '../types/events';
 
 const PMTILES_VECTOR = 'pmtiles://https://www.bus.re/assets/reunion-DskqYIt0.pmtiles';
+const PMTILES_TERRAIN = 'pmtiles://https://www.bus.re/assets/reunion-terrain-DpHRzEjp.pmtiles';
 
 // Réunion Island center coordinates
 const REUNION_CENTER: [number, number] = [55.536, -21.115];
@@ -44,6 +45,11 @@ export default function Map({ events, webcams, selectedEvent, onEventSelect }: M
             url: PMTILES_VECTOR,
             attribution: '<a href="https://protomaps.com">Protomaps</a> © <a href="https://openstreetmap.org">OpenStreetMap</a>',
           },
+          'reunion-terrain': {
+            type: 'raster-dem',
+            url: PMTILES_TERRAIN,
+            tileSize: 256,
+          },
         },
         layers: layers('protomaps', namedFlavor('light'), { lang: 'fr' }),
       },
@@ -55,6 +61,22 @@ export default function Map({ events, webcams, selectedEvent, onEventSelect }: M
     map.current.addControl(new maplibregl.ScaleControl(), 'bottom-left');
 
     map.current.on('load', () => {
+      // Add hillshade layer at the bottom
+      const firstLayerId = map.current!.getStyle().layers[0]?.id;
+      map.current!.addLayer(
+        {
+          id: 'hillshade',
+          type: 'hillshade',
+          source: 'reunion-terrain',
+          paint: {
+            'hillshade-shadow-color': '#473B24',
+            'hillshade-illumination-anchor': 'viewport',
+            'hillshade-exaggeration': 0.5,
+          },
+        },
+        firstLayerId
+      );
+
       // Add highlight layer for national roads (ref starting with N)
       map.current!.addLayer({
         id: 'national-roads-highlight',
