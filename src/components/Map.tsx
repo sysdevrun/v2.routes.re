@@ -6,7 +6,6 @@ import { layers, namedFlavor } from '@protomaps/basemaps';
 import type { MapEvent, Webcam } from '../types/events';
 
 const PMTILES_VECTOR = 'pmtiles://https://www.bus.re/assets/reunion-DskqYIt0.pmtiles';
-const PMTILES_TERRAIN = 'pmtiles://https://www.bus.re/assets/reunion-terrain-DpHRzEjp.pmtiles';
 
 // Réunion Island center coordinates
 const REUNION_CENTER: [number, number] = [55.536, -21.115];
@@ -45,23 +44,11 @@ export default function Map({ events, webcams, selectedEvent, onEventSelect }: M
             url: PMTILES_VECTOR,
             attribution: '<a href="https://protomaps.com">Protomaps</a> © <a href="https://openstreetmap.org">OpenStreetMap</a>',
           },
-          'reunion-terrain': {
-            type: 'raster-dem',
-            url: PMTILES_TERRAIN,
-            tileSize: 256,
-          },
-        },
-        terrain: {
-          source: 'reunion-terrain',
-          exaggeration: 0,
         },
         layers: layers('protomaps', namedFlavor('light'), { lang: 'fr' }),
       },
       center: REUNION_CENTER,
       zoom: INITIAL_ZOOM,
-      pitch: 45,
-      bearing: 0,
-      maxPitch: 85,
     });
 
     map.current.addControl(new maplibregl.NavigationControl(), 'top-right');
@@ -238,7 +225,6 @@ export default function Map({ events, webcams, selectedEvent, onEventSelect }: M
     map.current.flyTo({
       center: selectedEvent.coordinates,
       zoom: 14,
-      pitch: 60,
     });
   }, [selectedEvent]);
 
