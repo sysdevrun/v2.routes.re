@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import Map from './components/Map';
 import EventsList from './components/EventsList';
 import EventDetails from './components/EventDetails';
-import { fetchAllEvents } from './services/api';
+import { fetchAllEvents, WEBCAMS } from './services/api';
 import type { MapEvent } from './types/events';
 
 function App() {
@@ -15,8 +15,8 @@ function App() {
     async function loadEvents() {
       setLoading(true);
       try {
-        const data = await fetchAllEvents();
-        setEvents(data);
+        const eventsData = await fetchAllEvents();
+        setEvents(eventsData);
       } catch (error) {
         console.error('Failed to load events:', error);
       } finally {
@@ -110,6 +110,7 @@ function App() {
         <main className="flex-1 relative">
           <Map
             events={events}
+            webcams={WEBCAMS}
             selectedEvent={selectedEvent}
             onEventSelect={handleEventSelect}
           />

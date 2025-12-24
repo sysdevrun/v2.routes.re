@@ -3,9 +3,10 @@ import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Protocol } from 'pmtiles';
 import { layers, namedFlavor } from '@protomaps/basemaps';
-import type { MapEvent } from '../types/events';
+import type { MapEvent, Webcam } from '../types/events';
 
 const PMTILES_VECTOR = 'pmtiles://https://www.bus.re/assets/reunion-DskqYIt0.pmtiles';
+const PMTILES_TERRAIN = 'pmtiles://https://www.bus.re/assets/reunion-terrain-DpHRzEjp.pmtiles';
 
 // Réunion Island center coordinates
 const REUNION_CENTER: [number, number] = [55.536, -21.115];
@@ -13,14 +14,16 @@ const INITIAL_ZOOM = 10;
 
 interface MapProps {
   events: MapEvent[];
+  webcams: Webcam[];
   selectedEvent: MapEvent | null;
   onEventSelect: (event: MapEvent | null) => void;
 }
 
-export default function Map({ events, selectedEvent, onEventSelect }: MapProps) {
+export default function Map({ events, webcams, selectedEvent, onEventSelect }: MapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const markersRef = useRef<maplibregl.Marker[]>([]);
+  const webcamMarkersRef = useRef<maplibregl.Marker[]>([]);
   const [mapLoaded, setMapLoaded] = useState(false);
 
   useEffect(() => {
@@ -42,19 +45,61 @@ export default function Map({ events, selectedEvent, onEventSelect }: MapProps) 
             url: PMTILES_VECTOR,
             attribution: '<a href="https://protomaps.com">Protomaps</a> © <a href="https://openstreetmap.org">OpenStreetMap</a>',
           },
+          'reunion-terrain': {
+            type: 'raster-dem',
+            url: PMTILES_TERRAIN,
+            tileSize: 256,
+            encoding: 'terrarium',
+          },
         },
         layers: layers('protomaps', namedFlavor('light'), { lang: 'fr' }),
       },
       center: REUNION_CENTER,
       zoom: INITIAL_ZOOM,
-      pitch: 0,
-      bearing: 0,
     });
 
     map.current.addControl(new maplibregl.NavigationControl(), 'top-right');
     map.current.addControl(new maplibregl.ScaleControl(), 'bottom-left');
 
     map.current.on('load', () => {
+      // Add hillshade layer at the bottom
+      const firstLayerId = map.current!.getStyle().layers[0]?.id;
+      map.current!.addLayer(
+        {
+          id: 'hillshade',
+          type: 'hillshade',
+          source: 'reunion-terrain',
+          paint: {
+            'hillshade-shadow-color': '#473B24',
+            'hillshade-illumination-anchor': 'viewport',
+            'hillshade-exaggeration': 0.5,
+          },
+        },
+        firstLayerId
+      );
+
+      // Add highlight layer for national roads (ref starting with N)
+      map.current!.addLayer({
+        id: 'national-roads-highlight',
+        type: 'line',
+        source: 'protomaps',
+        'source-layer': 'roads',
+        filter: [
+          'all',
+          ['has', 'ref'],
+          ['==', ['slice', ['get', 'ref'], 0, 1], 'N'],
+        ],
+        paint: {
+          'line-color': '#dc2626',
+          'line-width': 6,
+          'line-opacity': 0.8,
+        },
+        layout: {
+          'line-cap': 'round',
+          'line-join': 'round',
+        },
+      });
+
       setMapLoaded(true);
     });
 
@@ -65,7 +110,7 @@ export default function Map({ events, selectedEvent, onEventSelect }: MapProps) 
     };
   }, []);
 
-  // Update markers when events change
+  // Update event markers when events change
   useEffect(() => {
     if (!map.current || !mapLoaded) return;
 
@@ -106,6 +151,93 @@ export default function Map({ events, selectedEvent, onEventSelect }: MapProps) 
       markersRef.current.push(marker);
     });
   }, [events, mapLoaded, onEventSelect]);
+
+  // Update webcam markers when webcams change
+  useEffect(() => {
+    if (!map.current || !mapLoaded) return;
+
+    // Clear existing webcam markers
+    webcamMarkersRef.current.forEach(marker => marker.remove());
+    webcamMarkersRef.current = [];
+
+    // Add webcam image markers
+    webcams.forEach(webcam => {
+      const el = document.createElement('div');
+      el.className = 'webcam-marker';
+      el.style.width = '120px';
+      el.style.height = '90px';
+      el.style.borderRadius = '8px';
+      el.style.overflow = 'hidden';
+      el.style.border = '3px solid white';
+      el.style.boxShadow = '0 4px 12px rgba(0,0,0,0.4)';
+      el.style.cursor = 'pointer';
+      el.style.transition = 'box-shadow 0.2s';
+      el.style.backgroundColor = '#1f2937';
+
+      const img = document.createElement('img');
+      img.src = webcam.url;
+      img.alt = webcam.description;
+      img.style.width = '100%';
+      img.style.height = '100%';
+      img.style.objectFit = 'cover';
+      img.loading = 'lazy';
+
+      // Reload image every 30 seconds
+      const refreshInterval = setInterval(() => {
+        img.src = `${webcam.url}?t=${Date.now()}`;
+      }, 30000);
+
+      el.appendChild(img);
+
+      // Add label
+      const label = document.createElement('div');
+      label.style.position = 'absolute';
+      label.style.bottom = '0';
+      label.style.left = '0';
+      label.style.right = '0';
+      label.style.padding = '4px 6px';
+      label.style.backgroundColor = 'rgba(0,0,0,0.7)';
+      label.style.color = 'white';
+      label.style.fontSize = '10px';
+      label.style.lineHeight = '1.2';
+      label.style.whiteSpace = 'nowrap';
+      label.style.overflow = 'hidden';
+      label.style.textOverflow = 'ellipsis';
+      label.textContent = webcam.description;
+      el.style.position = 'relative';
+      el.appendChild(label);
+
+      el.addEventListener('mouseenter', () => {
+        el.style.boxShadow = '0 6px 20px rgba(0,0,0,0.5)';
+        el.style.zIndex = '10';
+      });
+
+      el.addEventListener('mouseleave', () => {
+        el.style.boxShadow = '0 4px 12px rgba(0,0,0,0.4)';
+        el.style.zIndex = '1';
+      });
+
+      el.addEventListener('click', () => {
+        window.open(webcam.url, '_blank');
+      });
+
+      const marker = new maplibregl.Marker({ element: el, anchor: 'center' })
+        .setLngLat(webcam.coordinates)
+        .addTo(map.current!);
+
+      webcamMarkersRef.current.push(marker);
+
+      // Store interval for cleanup
+      (marker as unknown as { _refreshInterval: number })._refreshInterval = refreshInterval;
+    });
+
+    return () => {
+      webcamMarkersRef.current.forEach(marker => {
+        const interval = (marker as unknown as { _refreshInterval?: number })._refreshInterval;
+        if (interval) clearInterval(interval);
+      });
+    };
+  }, [webcams, mapLoaded]);
 
   // Pan to selected event
   useEffect(() => {
