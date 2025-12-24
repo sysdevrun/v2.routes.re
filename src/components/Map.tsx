@@ -160,20 +160,18 @@ export default function Map({ events, webcams, selectedEvent, onEventSelect }: M
     const BASE_HEIGHT = 90;
     const BASE_ZOOM = 10;
 
-    // Function to update webcam sizes based on zoom
+    // Function to update webcam sizes based on zoom using CSS transform
+    // (changing width/height breaks anchor point calculation)
     const updateWebcamSizes = () => {
       const zoom = map.current!.getZoom();
       let scale = 1;
       if (zoom < BASE_ZOOM) {
         scale = Math.pow(2, zoom - BASE_ZOOM);
       }
-      const width = Math.round(BASE_WIDTH * scale);
-      const height = Math.round(BASE_HEIGHT * scale);
 
       webcamMarkersRef.current.forEach(marker => {
         const el = marker.getElement();
-        el.style.width = `${width}px`;
-        el.style.height = `${height}px`;
+        el.style.transform = `scale(${scale})`;
       });
     };
 
