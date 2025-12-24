@@ -1,10 +1,9 @@
 import type { RoadDisruptionsResponse, RoadWork, DisruptionType, MapEvent, LocalizedText, Webcam } from '../types/events';
 
-const PROXY_BASE = 'https://gtfs-proxy.sys-dev-run.re/proxy/';
-const API_HOST = 'www.infotrafic.re';
+const API_BASE = 'https://www.infotrafic.re';
 
-function proxyUrl(path: string): string {
-  return `${PROXY_BASE}${API_HOST}${path}`;
+function apiUrl(path: string): string {
+  return `${API_BASE}${path}`;
 }
 
 function getLocalizedText(text: LocalizedText | string | undefined): string {
@@ -73,7 +72,7 @@ function getEventColor(type: DisruptionType | 'work', severity?: number, traffic
 
 export async function fetchDisruptions(type: DisruptionType): Promise<MapEvent[]> {
   try {
-    const response = await fetch(proxyUrl(`/api/road/disruptions/${type}`));
+    const response = await fetch(apiUrl(`/api/road/disruptions/${type}`));
     if (!response.ok) {
       console.warn(`Failed to fetch ${type}:`, response.status);
       return [];
@@ -117,7 +116,7 @@ export async function fetchDisruptions(type: DisruptionType): Promise<MapEvent[]
 
 export async function fetchRoadWorks(): Promise<MapEvent[]> {
   try {
-    const response = await fetch(proxyUrl('/api/road/works'));
+    const response = await fetch(apiUrl('/api/road/works'));
     if (!response.ok) {
       console.warn('Failed to fetch road works:', response.status);
       return [];
