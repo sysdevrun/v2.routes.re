@@ -210,6 +210,21 @@ export default function Map({ events, webcams, selectedEvent, onEventSelect }: M
 
       el.appendChild(img);
 
+      // Add blue dot at exact position
+      const dot = document.createElement('div');
+      dot.style.position = 'absolute';
+      dot.style.top = '50%';
+      dot.style.left = '50%';
+      dot.style.transform = 'translate(-50%, -50%)';
+      dot.style.width = '10px';
+      dot.style.height = '10px';
+      dot.style.borderRadius = '50%';
+      dot.style.backgroundColor = '#2563eb';
+      dot.style.border = '2px solid white';
+      dot.style.boxShadow = '0 1px 3px rgba(0,0,0,0.4)';
+      dot.style.pointerEvents = 'none';
+      el.appendChild(dot);
+
       // Add label
       const label = document.createElement('div');
       label.style.position = 'absolute';
