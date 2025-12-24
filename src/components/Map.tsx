@@ -208,7 +208,7 @@ export default function Map({ events, webcams, selectedEvent, onEventSelect }: M
     webcamMarkers.current.forEach(marker => marker.remove());
     webcamMarkers.current = [];
 
-    // Calculate scale based on zoom
+    // Calculate scale based on zoom - below 10, scale with map
     const getScale = (zoom: number) => {
       if (zoom >= 10) return 1;
       // Scale down as we zoom out below 10
@@ -217,19 +217,19 @@ export default function Map({ events, webcams, selectedEvent, onEventSelect }: M
     const scale = getScale(currentZoom);
     const baseWidth = 160;
     const baseHeight = 120;
+    const scaledWidth = Math.max(baseWidth * scale, 20); // minimum 20px
+    const scaledHeight = Math.max(baseHeight * scale, 15);
 
     // Create new webcam markers
     webcams.forEach(webcam => {
       const el = document.createElement('div');
       el.className = 'webcam-marker';
       el.style.cursor = 'pointer';
-      el.style.transformOrigin = 'center center';
-      el.style.transform = `scale(${scale})`;
 
       const img = document.createElement('img');
       img.src = `${webcam.url}?rand=${webcamRefreshKey}`;
-      img.width = baseWidth;
-      img.height = baseHeight;
+      img.style.width = `${scaledWidth}px`;
+      img.style.height = `${scaledHeight}px`;
       img.style.borderRadius = '4px';
       img.style.border = '2px solid white';
       img.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
