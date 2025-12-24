@@ -4,7 +4,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { Protocol } from 'pmtiles';
 import { layers, namedFlavor } from '@protomaps/basemaps';
 import { MapboxOverlay } from '@deck.gl/mapbox';
-import { ScatterplotLayer, IconLayer } from '@deck.gl/layers';
+import { ScatterplotLayer } from '@deck.gl/layers';
 import type { MapEvent, Webcam } from '../types/events';
 
 const PMTILES_VECTOR = 'pmtiles://https://www.bus.re/assets/reunion-DskqYIt0.pmtiles';
@@ -34,8 +34,10 @@ export default function Map({ events, webcams, selectedEvent, onEventSelect }: M
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
   const deckOverlay = useRef<MapboxOverlay | null>(null);
+  const webcamMarkers = useRef<maplibregl.Marker[]>([]);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [webcamRefreshKey, setWebcamRefreshKey] = useState(0);
+  const [currentZoom, setCurrentZoom] = useState(INITIAL_ZOOM);
 
   // Refresh webcams every 10 seconds
   useEffect(() => {
@@ -128,6 +130,12 @@ export default function Map({ events, webcams, selectedEvent, onEventSelect }: M
       setMapLoaded(true);
     });
 
+    map.current.on('zoom', () => {
+      if (map.current) {
+        setCurrentZoom(map.current.getZoom());
+      }
+    });
+
     return () => {
       maplibregl.removeProtocol('pmtiles');
       map.current?.remove();
@@ -183,44 +191,67 @@ export default function Map({ events, webcams, selectedEvent, onEventSelect }: M
       },
     });
 
-    // Webcam images as icons
-    const webcamIconsLayer = new IconLayer({
-      id: 'webcam-icons-layer',
-      data: webcams,
-      pickable: true,
-      getIcon: (d: Webcam) => ({
-        url: `${d.url}?rand=${webcamRefreshKey}`,
-        width: 320,
-        height: 240,
-        anchorY: 120,
-        anchorX: 160,
-      }),
-      getPosition: (d: Webcam) => d.coordinates,
-      getSize: 120,
-      sizeScale: 1,
-      sizeMinPixels: 30,
-      sizeMaxPixels: 150,
-      onClick: ({ object }) => {
-        if (object) {
-          window.open((object as Webcam).url, '_blank');
-        }
-      },
-      loadOptions: {
-        imagebitmap: {
-          resizeWidth: 320,
-          resizeHeight: 240,
-        },
-      },
-    });
-
     deckOverlay.current.setProps({
-      layers: [webcamIconsLayer, webcamDotsLayer, eventsLayer],
+      layers: [webcamDotsLayer, eventsLayer],
     });
-  }, [events, webcams, mapLoaded, onEventSelect, webcamRefreshKey]);
+  }, [events, webcams, mapLoaded, onEventSelect, currentZoom]);
 
   useEffect(() => {
     updateLayers();
   }, [updateLayers]);
+
+  // Manage webcam HTML markers (images need browser img tags due to CORS)
+  useEffect(() => {
+    if (!map.current || !mapLoaded) return;
+
+    // Remove existing webcam markers
+    webcamMarkers.current.forEach(marker => marker.remove());
+    webcamMarkers.current = [];
+
+    // Calculate scale based on zoom
+    const getScale = (zoom: number) => {
+      if (zoom >= 10) return 1;
+      // Scale down as we zoom out below 10
+      return Math.pow(2, zoom - 10);
+    };
+    const scale = getScale(currentZoom);
+    const baseWidth = 160;
+    const baseHeight = 120;
+
+    // Create new webcam markers
+    webcams.forEach(webcam => {
+      const el = document.createElement('div');
+      el.className = 'webcam-marker';
+      el.style.cursor = 'pointer';
+      el.style.transformOrigin = 'center center';
+      el.style.transform = `scale(${scale})`;
+
+      const img = document.createElement('img');
+      img.src = `${webcam.url}?rand=${webcamRefreshKey}`;
+      img.width = baseWidth;
+      img.height = baseHeight;
+      img.style.borderRadius = '4px';
+      img.style.border = '2px solid white';
+      img.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
+      img.alt = webcam.description;
+
+      el.appendChild(img);
+      el.addEventListener('click', () => {
+        window.open(webcam.url, '_blank');
+      });
+
+      const marker = new maplibregl.Marker({ element: el, anchor: 'center' })
+        .setLngLat(webcam.coordinates)
+        .addTo(map.current!);
+
+      webcamMarkers.current.push(marker);
+    });
+
+    return () => {
+      webcamMarkers.current.forEach(marker => marker.remove());
+      webcamMarkers.current = [];
+    };
+  }, [webcams, mapLoaded, webcamRefreshKey, currentZoom]);
 
   // Pan to selected event
   useEffect(() => {
