@@ -156,6 +156,27 @@ export default function Map({ events, webcams, selectedEvent, onEventSelect }: M
   useEffect(() => {
     if (!map.current || !mapLoaded) return;
 
+    const BASE_WIDTH = 120;
+    const BASE_HEIGHT = 90;
+    const BASE_ZOOM = 10;
+
+    // Function to update webcam sizes based on zoom
+    const updateWebcamSizes = () => {
+      const zoom = map.current!.getZoom();
+      let scale = 1;
+      if (zoom < BASE_ZOOM) {
+        scale = Math.pow(2, zoom - BASE_ZOOM);
+      }
+      const width = Math.round(BASE_WIDTH * scale);
+      const height = Math.round(BASE_HEIGHT * scale);
+
+      webcamMarkersRef.current.forEach(marker => {
+        const el = marker.getElement();
+        el.style.width = `${width}px`;
+        el.style.height = `${height}px`;
+      });
+    };
+
     // Clear existing webcam markers
     webcamMarkersRef.current.forEach(marker => marker.remove());
     webcamMarkersRef.current = [];
@@ -164,8 +185,8 @@ export default function Map({ events, webcams, selectedEvent, onEventSelect }: M
     webcams.forEach(webcam => {
       const el = document.createElement('div');
       el.className = 'webcam-marker';
-      el.style.width = '120px';
-      el.style.height = '90px';
+      el.style.width = `${BASE_WIDTH}px`;
+      el.style.height = `${BASE_HEIGHT}px`;
       el.style.borderRadius = '8px';
       el.style.overflow = 'hidden';
       el.style.border = '3px solid white';
@@ -175,17 +196,17 @@ export default function Map({ events, webcams, selectedEvent, onEventSelect }: M
       el.style.backgroundColor = '#1f2937';
 
       const img = document.createElement('img');
-      img.src = webcam.url;
+      img.src = `${webcam.url}?rand=${Math.random().toString(36).substring(2)}`;
       img.alt = webcam.description;
       img.style.width = '100%';
       img.style.height = '100%';
       img.style.objectFit = 'cover';
       img.loading = 'lazy';
 
-      // Reload image every 30 seconds
+      // Reload image every 10 seconds with random string to prevent caching
       const refreshInterval = setInterval(() => {
-        img.src = `${webcam.url}?t=${Date.now()}`;
-      }, 30000);
+        img.src = `${webcam.url}?rand=${Math.random().toString(36).substring(2)}`;
+      }, 10000);
 
       el.appendChild(img);
 
@@ -231,11 +252,16 @@ export default function Map({ events, webcams, selectedEvent, onEventSelect }: M
       (marker as unknown as { _refreshInterval: number })._refreshInterval = refreshInterval;
     });
 
+    // Listen for zoom changes
+    map.current.on('zoom', updateWebcamSizes);
+    updateWebcamSizes();
+
     return () => {
       webcamMarkersRef.current.forEach(marker => {
         const interval = (marker as unknown as { _refreshInterval?: number })._refreshInterval;
         if (interval) clearInterval(interval);
       });
+      map.current?.off('zoom', updateWebcamSizes);
     };
   }, [webcams, mapLoaded]);
 
