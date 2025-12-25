@@ -16,6 +16,7 @@ const PMTILES_MAJOR_ROADS = `pmtiles://${majorRoadsUrl}`;
 // Réunion Island center coordinates
 const REUNION_CENTER: [number, number] = [55.536, -21.115];
 const INITIAL_ZOOM = 10;
+const WEBCAM_SCALE_ZOOM_THRESHOLD = 12;
 
 // Convert hex color to RGB array
 function hexToRgb(hex: string): [number, number, number, number] {
@@ -206,11 +207,10 @@ export default function Map({ events, webcams, selectedEvent, onEventSelect }: M
     webcamMarkers.current.forEach(marker => marker.remove());
     webcamMarkers.current = [];
 
-    // Calculate scale based on zoom - below 10, scale with map
+    // Calculate scale based on zoom - below threshold, scale with map
     const getScale = (zoom: number) => {
-      if (zoom >= 10) return 1;
-      // Scale down as we zoom out below 10
-      return Math.pow(2, zoom - 10);
+      if (zoom >= WEBCAM_SCALE_ZOOM_THRESHOLD) return 1;
+      return Math.pow(2, zoom - WEBCAM_SCALE_ZOOM_THRESHOLD);
     };
     const scale = getScale(currentZoom);
     const baseWidth = 160;
