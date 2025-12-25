@@ -110,10 +110,15 @@ export default function Map({ events, webcams, selectedEvent, onEventSelect }: M
         type: 'line',
         source: 'major-roads',
         'source-layer': 'roads',
+        filter: [
+          'all',
+          ['has', 'ref'],
+          ['==', ['slice', ['get', 'ref'], 0, 1], 'N'],
+        ],
         paint: {
           'line-color': '#2563eb',
           'line-width': 6,
-          'line-opacity': 0.5,
+          'line-opacity': 0.15,
         },
         layout: {
           'line-cap': 'round',
