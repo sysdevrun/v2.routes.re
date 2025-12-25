@@ -6,9 +6,12 @@ import { layers, namedFlavor } from '@protomaps/basemaps';
 import { MapboxOverlay } from '@deck.gl/mapbox';
 import { ScatterplotLayer } from '@deck.gl/layers';
 import type { MapEvent, Webcam } from '../types/events';
+import majorRoadsUrl from '../pmtiles/major_roads.pmtiles?url';
+import trafficolorData from '../data/trafficolor.json';
 
 const PMTILES_VECTOR = 'pmtiles://https://www.bus.re/assets/reunion-DskqYIt0.pmtiles';
-const PMTILES_TERRAIN = 'pmtiles://https://www.bus.re/assets/reunion-terrain-DpHRzEjp.pmtiles';
+const PMTILES_TERRAIN = 'pmtiles://https://www.bus.re/assets/reunion-terrain-DpHRzEjp.pmtiles?type=hillshade';
+const PMTILES_MAJOR_ROADS = `pmtiles://${majorRoadsUrl}`;
 
 // Réunion Island center coordinates
 const REUNION_CENTER: [number, number] = [55.536, -21.115];
@@ -69,11 +72,28 @@ export default function Map({ events, webcams, selectedEvent, onEventSelect }: M
           'reunion-terrain': {
             type: 'raster-dem',
             url: PMTILES_TERRAIN,
-            tileSize: 256,
             encoding: 'terrarium',
           },
+          'major-roads': {
+            type: 'vector',
+            url: PMTILES_MAJOR_ROADS,
+          },
+          'trafficolor': {
+            type: 'geojson',
+            data: trafficolorData as GeoJSON.FeatureCollection<GeoJSON.LineString>,
+          },
         },
-        layers: layers('protomaps', namedFlavor('light'), { lang: 'fr' }),
+        layers: [
+          ...layers('protomaps', namedFlavor('light'), { lang: 'fr' }),
+          {
+            id: 'hillshading',
+            source: 'reunion-terrain',
+            type: 'hillshade',
+            paint: {
+              'hillshade-exaggeration': 0.1,
+            },
+          },
+        ],
       },
       center: REUNION_CENTER,
       zoom: INITIAL_ZOOM,
@@ -89,27 +109,11 @@ export default function Map({ events, webcams, selectedEvent, onEventSelect }: M
     map.current.addControl(deckOverlay.current as unknown as maplibregl.IControl);
 
     map.current.on('load', () => {
-      // Add hillshade layer at the bottom
-      const firstLayerId = map.current!.getStyle().layers[0]?.id;
-      map.current!.addLayer(
-        {
-          id: 'hillshade',
-          type: 'hillshade',
-          source: 'reunion-terrain',
-          paint: {
-            'hillshade-shadow-color': '#473B24',
-            'hillshade-illumination-anchor': 'viewport',
-            'hillshade-exaggeration': 0.5,
-          },
-        },
-        firstLayerId
-      );
-
-      // Add highlight layer for national roads (ref starting with N)
+      // Add major roads layer from dedicated pmtiles
       map.current!.addLayer({
-        id: 'national-roads-highlight',
+        id: 'major-roads-highlight',
         type: 'line',
-        source: 'protomaps',
+        source: 'major-roads',
         'source-layer': 'roads',
         filter: [
           'all',
@@ -117,7 +121,23 @@ export default function Map({ events, webcams, selectedEvent, onEventSelect }: M
           ['==', ['slice', ['get', 'ref'], 0, 1], 'N'],
         ],
         paint: {
-          'line-color': '#dc2626',
+          'line-color': '#2563eb',
+          'line-width': 6,
+          'line-opacity': 0.15,
+        },
+        layout: {
+          'line-cap': 'round',
+          'line-join': 'round',
+        },
+      });
+
+      // Add trafficolor layer
+      map.current!.addLayer({
+        id: 'trafficolor-layer',
+        type: 'line',
+        source: 'trafficolor',
+        paint: {
+          'line-color': ['get', 'trafficolor'],
           'line-width': 6,
           'line-opacity': 0.8,
         },
@@ -169,32 +189,10 @@ export default function Map({ events, webcams, selectedEvent, onEventSelect }: M
       },
     });
 
-    // Webcam position dots (blue dots showing exact location)
-    const webcamDotsLayer = new ScatterplotLayer({
-      id: 'webcam-dots-layer',
-      data: webcams,
-      pickable: true,
-      opacity: 1,
-      stroked: true,
-      filled: true,
-      radiusMinPixels: 6,
-      radiusMaxPixels: 10,
-      lineWidthMinPixels: 2,
-      getPosition: (d: Webcam) => d.coordinates,
-      getRadius: 8,
-      getFillColor: [37, 99, 235, 255], // blue-600
-      getLineColor: [255, 255, 255, 255],
-      onClick: ({ object }) => {
-        if (object) {
-          window.open((object as Webcam).url, '_blank');
-        }
-      },
-    });
-
     deckOverlay.current.setProps({
-      layers: [webcamDotsLayer, eventsLayer],
+      layers: [eventsLayer],
     });
-  }, [events, webcams, mapLoaded, onEventSelect, currentZoom]);
+  }, [events, mapLoaded, onEventSelect]);
 
   useEffect(() => {
     updateLayers();

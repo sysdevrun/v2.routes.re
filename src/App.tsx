@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import Map from './components/Map';
 import EventsList from './components/EventsList';
 import EventDetails from './components/EventDetails';
+import RoadStatus from './components/RoadStatus';
 import { fetchAllEvents, WEBCAMS } from './services/api';
 import type { MapEvent } from './types/events';
 
@@ -89,6 +90,9 @@ function App() {
           </button>
         </div>
       </header>
+
+      {/* Road Status */}
+      <RoadStatus events={events} />
 
       {/* Main content */}
       <div className="flex-1 flex overflow-hidden relative">
