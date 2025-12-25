@@ -6,9 +6,11 @@ import { layers, namedFlavor } from '@protomaps/basemaps';
 import { MapboxOverlay } from '@deck.gl/mapbox';
 import { ScatterplotLayer } from '@deck.gl/layers';
 import type { MapEvent, Webcam } from '../types/events';
+import majorRoadsUrl from '../pmtiles/major_roads.pmtiles?url';
 
 const PMTILES_VECTOR = 'pmtiles://https://www.bus.re/assets/reunion-DskqYIt0.pmtiles';
 const PMTILES_TERRAIN = 'pmtiles://https://www.bus.re/assets/reunion-terrain-DpHRzEjp.pmtiles?type=hillshade';
+const PMTILES_MAJOR_ROADS = `pmtiles://${majorRoadsUrl}`;
 
 // Réunion Island center coordinates
 const REUNION_CENTER: [number, number] = [55.536, -21.115];
@@ -71,6 +73,10 @@ export default function Map({ events, webcams, selectedEvent, onEventSelect }: M
             url: PMTILES_TERRAIN,
             encoding: 'terrarium',
           },
+          'major-roads': {
+            type: 'vector',
+            url: PMTILES_MAJOR_ROADS,
+          },
         },
         layers: [
           ...layers('protomaps', namedFlavor('light'), { lang: 'fr' }),
@@ -98,17 +104,12 @@ export default function Map({ events, webcams, selectedEvent, onEventSelect }: M
     map.current.addControl(deckOverlay.current as unknown as maplibregl.IControl);
 
     map.current.on('load', () => {
-      // Add highlight layer for national roads (ref starting with N)
+      // Add major roads layer from dedicated pmtiles
       map.current!.addLayer({
-        id: 'national-roads-highlight',
+        id: 'major-roads-highlight',
         type: 'line',
-        source: 'protomaps',
+        source: 'major-roads',
         'source-layer': 'roads',
-        filter: [
-          'all',
-          ['has', 'ref'],
-          ['==', ['slice', ['get', 'ref'], 0, 1], 'N'],
-        ],
         paint: {
           'line-color': '#2563eb',
           'line-width': 6,
