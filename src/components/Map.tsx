@@ -7,6 +7,7 @@ import { MapboxOverlay } from '@deck.gl/mapbox';
 import { ScatterplotLayer } from '@deck.gl/layers';
 import type { MapEvent, Webcam } from '../types/events';
 import majorRoadsUrl from '../pmtiles/major_roads.pmtiles?url';
+import trafficolorData from '../data/trafficolor.json';
 
 const PMTILES_VECTOR = 'pmtiles://https://www.bus.re/assets/reunion-DskqYIt0.pmtiles';
 const PMTILES_TERRAIN = 'pmtiles://https://www.bus.re/assets/reunion-terrain-DpHRzEjp.pmtiles?type=hillshade';
@@ -15,45 +16,6 @@ const PMTILES_MAJOR_ROADS = `pmtiles://${majorRoadsUrl}`;
 // Réunion Island center coordinates
 const REUNION_CENTER: [number, number] = [55.536, -21.115];
 const INITIAL_ZOOM = 10;
-
-// Trafficolor data as GeoJSON
-const TRAFFICOLOR_DATA: GeoJSON.FeatureCollection<GeoJSON.LineString> = {
-  type: 'FeatureCollection',
-  features: [
-    {
-      type: 'Feature',
-      properties: {
-        id: 'RN1 PMV Les Sables S1 VERS RN1 PMV Etang Salé S2',
-        disruption_type: 'trafficolor',
-        severity_level: 2,
-        trafficolor: '#77F362',
-        public_description_fr: 'Trafic fluide',
-        public_description_en: 'Smooth traffic',
-        source: 'Labocom',
-        visibility: 'yes',
-      },
-      geometry: {
-        type: 'LineString',
-        coordinates: [
-          [55.36749, -21.28184],
-          [55.36592, -21.28054],
-          [55.36539, -21.28013],
-          [55.36472, -21.27974],
-          [55.36405, -21.27944],
-          [55.36339, -21.27925],
-          [55.36309, -21.27919],
-          [55.36234, -21.2791],
-          [55.36213, -21.27909],
-          [55.36149, -21.27911],
-          [55.36071, -21.27922],
-          [55.35387, -21.28059],
-          [55.35305, -21.28071],
-          [55.35103, -21.28084],
-        ],
-      },
-    },
-  ],
-};
 
 // Convert hex color to RGB array
 function hexToRgb(hex: string): [number, number, number, number] {
@@ -118,7 +80,7 @@ export default function Map({ events, webcams, selectedEvent, onEventSelect }: M
           },
           'trafficolor': {
             type: 'geojson',
-            data: TRAFFICOLOR_DATA,
+            data: trafficolorData as GeoJSON.FeatureCollection<GeoJSON.LineString>,
           },
         },
         layers: [
