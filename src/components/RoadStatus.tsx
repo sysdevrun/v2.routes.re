@@ -12,31 +12,13 @@ interface RouteStatus {
   name: string;
   events: MapEvent[];
   hasIncident: boolean;
-  severity: 'normal' | 'warning' | 'danger';
 }
 
-function getRouteSeverity(events: MapEvent[]): 'normal' | 'warning' | 'danger' {
-  if (events.length === 0) return 'normal';
-
-  const hasDanger = events.some(e =>
-    e.type === 'accident' ||
-    e.type === 'roadclosure' ||
-    e.type === 'flood'
-  );
-  if (hasDanger) return 'danger';
-
-  return 'warning';
-}
-
-function getSeverityStyles(severity: 'normal' | 'warning' | 'danger'): string {
-  switch (severity) {
-    case 'danger':
-      return 'bg-red-100 border-red-500 text-red-800';
-    case 'warning':
-      return 'bg-amber-100 border-amber-500 text-amber-800';
-    default:
-      return 'bg-green-100 border-green-500 text-green-800';
+function getStatusStyles(hasIncident: boolean): string {
+  if (hasIncident) {
+    return 'bg-amber-100 border-amber-500 text-amber-800';
   }
+  return 'bg-green-100 border-green-500 text-green-800';
 }
 
 export default function RoadStatus({ events }: RoadStatusProps) {
@@ -54,7 +36,6 @@ export default function RoadStatus({ events }: RoadStatusProps) {
         name: routeName,
         events: routeEvents,
         hasIncident: routeEvents.length > 0,
-        severity: getRouteSeverity(routeEvents),
       };
     });
   }, [events]);
@@ -66,7 +47,7 @@ export default function RoadStatus({ events }: RoadStatusProps) {
           {routeStatuses.map(route => (
             <div
               key={route.name}
-              className={`px-4 py-2 rounded-lg border-2 transition-all ${getSeverityStyles(route.severity)}`}
+              className={`px-4 py-2 rounded-lg border-2 transition-all ${getStatusStyles(route.hasIncident)}`}
             >
               <div className="font-semibold text-sm">{route.name}</div>
               {route.events.length > 0 && (

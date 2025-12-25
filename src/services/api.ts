@@ -5,7 +5,7 @@ const FAKE_EVENTS: MapEvent[] = [
   {
     id: 'accident-1',
     type: 'accident',
-    coordinates: [55.39, -20.89], // Inside Route du Littoral
+    coordinates: [55.392269690393974, -20.8833473618162], // Inside Route du Littoral
     title: 'Accident - Collision entre 2 véhicules',
     description: 'RN1 Route du Littoral, direction Saint-Denis. Circulation ralentie.',
     severity: 3,
@@ -15,7 +15,7 @@ const FAKE_EVENTS: MapEvent[] = [
   {
     id: 'roadclosure-1',
     type: 'roadclosure',
-    coordinates: [55.47, -21.20], // Inside Route de Cilaos
+    coordinates: [55.44684877335143, -21.19954797233624], // Inside Route de Cilaos
     title: 'Route fermée - Éboulement',
     description: 'RN5 Route de Cilaos fermée suite à un éboulement. Déviation en place.',
     severity: 4,

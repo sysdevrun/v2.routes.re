@@ -169,32 +169,10 @@ export default function Map({ events, webcams, selectedEvent, onEventSelect }: M
       },
     });
 
-    // Webcam position dots (blue dots showing exact location)
-    const webcamDotsLayer = new ScatterplotLayer({
-      id: 'webcam-dots-layer',
-      data: webcams,
-      pickable: true,
-      opacity: 1,
-      stroked: true,
-      filled: true,
-      radiusMinPixels: 6,
-      radiusMaxPixels: 10,
-      lineWidthMinPixels: 2,
-      getPosition: (d: Webcam) => d.coordinates,
-      getRadius: 8,
-      getFillColor: [37, 99, 235, 255], // blue-600
-      getLineColor: [255, 255, 255, 255],
-      onClick: ({ object }) => {
-        if (object) {
-          window.open((object as Webcam).url, '_blank');
-        }
-      },
-    });
-
     deckOverlay.current.setProps({
-      layers: [webcamDotsLayer, eventsLayer],
+      layers: [eventsLayer],
     });
-  }, [events, webcams, mapLoaded, onEventSelect, currentZoom]);
+  }, [events, mapLoaded, onEventSelect]);
 
   useEffect(() => {
     updateLayers();
