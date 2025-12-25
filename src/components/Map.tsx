@@ -64,7 +64,6 @@ export default function Map({ events, webcams, selectedEvent, onEventSelect }: M
           protomaps: {
             type: 'vector',
             url: PMTILES_VECTOR,
-            minzoom: 11,
             attribution: '<a href="https://protomaps.com">Protomaps</a> © <a href="https://openstreetmap.org">OpenStreetMap</a>',
           },
           'reunion-terrain': {
