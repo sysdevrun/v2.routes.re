@@ -110,9 +110,9 @@ export default function Map({ events, webcams, selectedEvent, onEventSelect }: M
           ['==', ['slice', ['get', 'ref'], 0, 1], 'N'],
         ],
         paint: {
-          'line-color': '#dc2626',
+          'line-color': '#2563eb',
           'line-width': 6,
-          'line-opacity': 0.8,
+          'line-opacity': 0.5,
         },
         layout: {
           'line-cap': 'round',
