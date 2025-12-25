@@ -15,7 +15,7 @@ const FAKE_EVENTS: MapEvent[] = [
   {
     id: 'roadclosure-1',
     type: 'roadclosure',
-    coordinates: [55.44684877335143, -21.19954797233624], // Inside Route de Cilaos
+    coordinates: [55.46, -21.20], // Inside Route de Cilaos
     title: 'Route fermée - Éboulement',
     description: 'RN5 Route de Cilaos fermée suite à un éboulement. Déviation en place.',
     severity: 4,
