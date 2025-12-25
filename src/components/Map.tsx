@@ -8,7 +8,7 @@ import { ScatterplotLayer } from '@deck.gl/layers';
 import type { MapEvent, Webcam } from '../types/events';
 
 const PMTILES_VECTOR = 'pmtiles://https://www.bus.re/assets/reunion-DskqYIt0.pmtiles';
-const PMTILES_TERRAIN = 'pmtiles://https://www.bus.re/assets/reunion-terrain-DpHRzEjp.pmtiles';
+const PMTILES_TERRAIN = 'pmtiles://https://www.bus.re/assets/reunion-terrain-DpHRzEjp.pmtiles?type=hillshade';
 
 // Réunion Island center coordinates
 const REUNION_CENTER: [number, number] = [55.536, -21.115];
@@ -69,11 +69,21 @@ export default function Map({ events, webcams, selectedEvent, onEventSelect }: M
           'reunion-terrain': {
             type: 'raster-dem',
             url: PMTILES_TERRAIN,
-            tileSize: 256,
             encoding: 'terrarium',
+            maxzoom: 12,
           },
         },
-        layers: layers('protomaps', namedFlavor('light'), { lang: 'fr' }),
+        layers: [
+          ...layers('protomaps', namedFlavor('light'), { lang: 'fr' }),
+          {
+            id: 'hillshading',
+            source: 'reunion-terrain',
+            type: 'hillshade',
+            paint: {
+              'hillshade-exaggeration': 0.1,
+            },
+          },
+        ],
       },
       center: REUNION_CENTER,
       zoom: INITIAL_ZOOM,
@@ -89,22 +99,6 @@ export default function Map({ events, webcams, selectedEvent, onEventSelect }: M
     map.current.addControl(deckOverlay.current as unknown as maplibregl.IControl);
 
     map.current.on('load', () => {
-      // Add hillshade layer at the bottom
-      const firstLayerId = map.current!.getStyle().layers[0]?.id;
-      map.current!.addLayer(
-        {
-          id: 'hillshade',
-          type: 'hillshade',
-          source: 'reunion-terrain',
-          paint: {
-            'hillshade-shadow-color': '#473B24',
-            'hillshade-illumination-anchor': 'viewport',
-            'hillshade-exaggeration': 0.5,
-          },
-        },
-        firstLayerId
-      );
-
       // Add highlight layer for national roads (ref starting with N)
       map.current!.addLayer({
         id: 'national-roads-highlight',
