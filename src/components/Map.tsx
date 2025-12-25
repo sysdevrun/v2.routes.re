@@ -70,7 +70,6 @@ export default function Map({ events, webcams, selectedEvent, onEventSelect }: M
             type: 'raster-dem',
             url: PMTILES_TERRAIN,
             encoding: 'terrarium',
-            maxzoom: 12,
           },
         },
         layers: [
